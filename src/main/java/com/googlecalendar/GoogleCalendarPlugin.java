@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @PluginDescriptor(
-		name = "Ravens Watch Calendar",
-		description = "Displays upcoming Google Calendar events in the sidebar",
+		name = "Raven's Watch Clan",
+		description = "Raven's Watch Clan Info",
 		tags = {"calendar", "schedule", "events"}
 )
 public class GoogleCalendarPlugin extends Plugin
@@ -45,7 +45,7 @@ public class GoogleCalendarPlugin extends Plugin
 		BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/calendar_icon.png");
 
 		navButton = NavigationButton.builder()
-				.tooltip("Ravens Watch Calendar")
+				.tooltip("Raven's Watch Clan")
 				.icon(icon)
 				.priority(5)
 				.panel(panel)
