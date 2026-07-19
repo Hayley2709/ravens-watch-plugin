@@ -1,55 +1,63 @@
 package com.googlecalendar;
 
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.border.EmptyBorder;
+import java.awt.Color;
+import java.awt.GridLayout;
+import java.util.List;
 import net.runelite.client.ui.PluginPanel;
-import javax.swing.*;
-import java.awt.*;
 
-public class GoogleCalendarPanel extends PluginPanel
-{
-    private final JPanel listContainer = new JPanel();
+public class GoogleCalendarPanel extends PluginPanel {
 
-    public GoogleCalendarPanel()
-    {
+    public GoogleCalendarPanel() {
         super();
-        setLayout(new BorderLayout());
+        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setLayout(new GridLayout(0, 1, 0, 10));
 
-        JLabel title = new JLabel("Upcoming Events");
-        title.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-        title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        add(title, BorderLayout.NORTH);
-
-        listContainer.setLayout(new BoxLayout(listContainer, BoxLayout.Y_AXIS));
-        add(new JScrollPane(listContainer), BorderLayout.CENTER);
+        // Header text with HTML wrapping for startup
+        JLabel title = new JLabel("<html><strong>Raven's Watch Event Calendar</strong><br><font color='gray'>Adjusted for your timezone</font></html>");
+        title.setFont(net.runelite.client.ui.FontManager.getRunescapeFont());
+        title.setForeground(Color.WHITE);
+        add(title);
     }
 
-    public void updateEvents(GoogleCalendarClient.CalendarResponse response)
-    {
-        SwingUtilities.invokeLater(() -> {
-            listContainer.removeAll();
-            if (response.items == null || response.items.isEmpty()) {
-                listContainer.add(new JLabel("No upcoming events found."));
-            } else {
-                for (GoogleCalendarClient.CalendarEvent event : response.items) {
-                    JPanel itemPanel = new JPanel(new BorderLayout());
-                    itemPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY));
+    public void updateEventsList(List<String[]> formattedEvents) {
+        this.removeAll();
 
-                    JLabel name = new JLabel(event.summary);
-                    name.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        // Header text with HTML wrapping when data updates
+        JLabel title = new JLabel("<html><strong>Raven's Watch Event Calendar</strong><br><font color='gray'>Adjusted for your timezone</font></html>");
+        title.setFont(net.runelite.client.ui.FontManager.getRunescapeFont());
+        title.setForeground(Color.WHITE);
+        this.add(title);
 
-                    String displayTime = event.start.dateTime != null ? event.start.dateTime : event.start.date;
-                    JLabel time = new JLabel(displayTime);
-                    time.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 10));
-                    time.setForeground(Color.GRAY);
+        if (formattedEvents == null || formattedEvents.isEmpty()) {
+            JLabel noEventsLabel = new JLabel("No upcoming events found.");
+            noEventsLabel.setForeground(Color.GRAY);
+            this.add(noEventsLabel);
+        } else {
+            for (String[] eventData : formattedEvents) {
+                String eventTitle = eventData[0];
+                String eventDate = eventData[1];
 
-                    itemPanel.add(name, BorderLayout.NORTH);
-                    itemPanel.add(time, BorderLayout.SOUTH);
-                    itemPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+                JPanel eventContainer = new JPanel(new GridLayout(2, 1, 0, 2));
+                eventContainer.setBorder(new EmptyBorder(5, 5, 5, 5));
+                eventContainer.setBackground(net.runelite.client.ui.ColorScheme.DARKER_GRAY_COLOR);
 
-                    listContainer.add(itemPanel);
-                }
+                JLabel titleLabel = new JLabel(eventTitle);
+                titleLabel.setForeground(Color.WHITE);
+
+                JLabel dateLabel = new JLabel(eventDate);
+                dateLabel.setForeground(Color.GRAY);
+
+                eventContainer.add(titleLabel);
+                eventContainer.add(dateLabel);
+
+                this.add(eventContainer);
             }
-            revalidate();
-            repaint();
-        });
+        }
+
+        this.revalidate();
+        this.repaint();
     }
 }

@@ -11,6 +11,11 @@ import net.runelite.client.util.ImageUtil;
 import net.runelite.client.task.Schedule;
 import java.awt.image.BufferedImage;
 import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @PluginDescriptor(
 		name = "Ravens Watch Calendar",
@@ -37,11 +42,10 @@ public class GoogleCalendarPlugin extends Plugin
 	{
 		panel = new GoogleCalendarPanel();
 
-		// Loads our custom icon from the plugin resources folder
 		BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/calendar_icon.png");
 
 		navButton = NavigationButton.builder()
-				.tooltip("Ravens Watch Calendar") // Fixed the sidebar hover tooltip name
+				.tooltip("Ravens Watch Calendar")
 				.icon(icon)
 				.priority(5)
 				.panel(panel)
@@ -57,10 +61,6 @@ public class GoogleCalendarPlugin extends Plugin
 		clientToolbar.removeNavigation(navButton);
 	}
 
-	/**
-	 * Automatically runs every 15 minutes to pull the latest calendar updates.
-	 * RuneLite's scheduler handles this safely off the main game engine thread.
-	 */
 	@Schedule(
 			period = 15,
 			unit = ChronoUnit.MINUTES,
@@ -77,7 +77,31 @@ public class GoogleCalendarPlugin extends Plugin
 			calendarClient.fetchEvents(config.apiKey(), config.calendarId(), new GoogleCalendarClient.CalendarCallback() {
 				@Override
 				public void onSuccess(GoogleCalendarClient.CalendarResponse response) {
-					panel.updateEvents(response);
+					List<String[]> processedEvents = new ArrayList<>();
+					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
+					ZoneId localZone = ZoneId.systemDefault();
+
+					if (response != null && response.items != null) {
+						for (GoogleCalendarClient.CalendarEvent event : response.items) {
+							// Check if it's an all-day event or missing a specific timestamp
+							if (event.start == null || event.start.dateTime == null) {
+								continue;
+							}
+
+							// 1. Clean up the event title text (removes unsupported emojis/boxes)
+							String titleText = event.summary != null ? event.summary : "Untitled Event";
+							String cleanTitle = titleText.replaceAll("[^a-zA-Z0-9\\s\\p{Punct}]", "").trim();
+
+							// 2. Convert from server timezone to local timezone, then format
+							ZonedDateTime localTime = ZonedDateTime.parse(event.start.dateTime)
+									.withZoneSameInstant(localZone);
+							String cleanDateText = localTime.format(formatter);
+
+							processedEvents.add(new String[]{cleanTitle, cleanDateText});
+						}
+					}
+
+					panel.updateEventsList(processedEvents);
 				}
 
 				@Override
