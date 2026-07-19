@@ -1,4 +1,4 @@
-package com.googlecalendar;
+package com.ravenswatch;
 
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;

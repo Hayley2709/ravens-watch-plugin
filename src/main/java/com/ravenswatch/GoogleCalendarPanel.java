@@ -1,4 +1,4 @@
-package com.googlecalendar;
+package com.ravenswatch;
 
 import javax.swing.JPanel;
 import javax.swing.JLabel;
