@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.List;
 import com.google.gson.Gson;
 
-public class GoogleCalendarClient
+public class RavensWatchClient
 {
     @Inject
     private OkHttpClient okHttpClient;

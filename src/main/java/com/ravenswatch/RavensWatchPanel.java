@@ -10,13 +10,13 @@ import java.awt.GridLayout;
 import java.util.List;
 import net.runelite.client.ui.PluginPanel;
 
-public class GoogleCalendarPanel extends PluginPanel {
+public class RavensWatchPanel extends PluginPanel {
 
     private final JButton calendarHeaderBtn;
     private final JPanel calendarContentPanel;
     private List<String[]> currentEvents;
 
-    public GoogleCalendarPanel() {
+    public RavensWatchPanel() {
         super();
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

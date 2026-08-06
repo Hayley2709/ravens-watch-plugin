@@ -22,25 +22,25 @@ import java.util.List;
 		description = "Raven's Watch Clan Info",
 		tags = {"calendar", "schedule", "events"}
 )
-public class GoogleCalendarPlugin extends Plugin
+public class RavensWatchPlugin extends Plugin
 {
 	@Inject private ClientToolbar clientToolbar;
-	@Inject private GoogleCalendarConfig config;
-	@Inject private GoogleCalendarClient calendarClient;
+	@Inject private RavensWatchConfig config;
+	@Inject private RavensWatchClient calendarClient;
 
-	private GoogleCalendarPanel panel;
+	private RavensWatchPanel panel;
 	private NavigationButton navButton;
 
 	@Provides
-	GoogleCalendarConfig provideConfig(ConfigManager configManager)
+	RavensWatchConfig provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(GoogleCalendarConfig.class);
+		return configManager.getConfig(RavensWatchConfig.class);
 	}
 
 	@Override
 	protected void startUp() throws Exception
 	{
-		panel = new GoogleCalendarPanel();
+		panel = new RavensWatchPanel();
 
 		BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/calendar_icon.png");
 
@@ -74,15 +74,15 @@ public class GoogleCalendarPlugin extends Plugin
 	private void refreshCalendar()
 	{
 		if (!config.apiKey().isEmpty() && !config.calendarId().isEmpty()) {
-			calendarClient.fetchEvents(config.apiKey(), config.calendarId(), new GoogleCalendarClient.CalendarCallback() {
+			calendarClient.fetchEvents(config.apiKey(), config.calendarId(), new RavensWatchClient.CalendarCallback() {
 				@Override
-				public void onSuccess(GoogleCalendarClient.CalendarResponse response) {
+				public void onSuccess(RavensWatchClient.CalendarResponse response) {
 					List<String[]> processedEvents = new ArrayList<>();
 					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
 					ZoneId localZone = ZoneId.systemDefault();
 
 					if (response != null && response.items != null) {
-						for (GoogleCalendarClient.CalendarEvent event : response.items) {
+						for (RavensWatchClient.CalendarEvent event : response.items) {
 							// Check if it's an all-day event or missing a specific timestamp
 							if (event.start == null || event.start.dateTime == null) {
 								continue;
