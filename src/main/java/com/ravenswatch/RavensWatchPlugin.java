@@ -81,20 +81,38 @@ public class RavensWatchPlugin extends Plugin
 					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
 					ZoneId localZone = ZoneId.systemDefault();
 
+// Define current time and the one-month cut-off window
+					ZonedDateTime now = ZonedDateTime.now(localZone);
+					ZonedDateTime oneMonthFromNow = now.plusMonths(1);
+
 					if (response != null && response.items != null) {
 						for (RavensWatchClient.CalendarEvent event : response.items) {
-							// Check if it's an all-day event or missing a specific timestamp
+// Check if it's an all-day event or missing a specific timestamp
 							if (event.start == null || event.start.dateTime == null) {
 								continue;
 							}
 
-							// 1. Clean up the event title text (removes unsupported emojis/boxes)
+// Convert from server timezone to local timezone first
+							ZonedDateTime localTime = ZonedDateTime.parse(event.start.dateTime)
+									.withZoneSameInstant(localZone);
+
+// Apply the upcoming month filter if enabled in config
+							if (config.upcomingMonthOnly()) {
+								if (localTime.isBefore(now) || localTime.isAfter(oneMonthFromNow)) {
+									continue;
+								}
+							} else {
+// Otherwise, just skip past events
+								if (localTime.isBefore(now)) {
+									continue;
+								}
+							}
+
+// 1. Clean up the event title text (removes unsupported emojis/boxes)
 							String titleText = event.summary != null ? event.summary : "Untitled Event";
 							String cleanTitle = titleText.replaceAll("[^a-zA-Z0-9\\s\\p{Punct}]", "").trim();
 
-							// 2. Convert from server timezone to local timezone, then format
-							ZonedDateTime localTime = ZonedDateTime.parse(event.start.dateTime)
-									.withZoneSameInstant(localZone);
+// 2. Format the date text
 							String cleanDateText = localTime.format(formatter);
 
 							processedEvents.add(new String[]{cleanTitle, cleanDateText});
@@ -106,7 +124,7 @@ public class RavensWatchPlugin extends Plugin
 
 				@Override
 				public void onError(String error) {
-					// Fail silently in the UI background
+// Fail silently in the UI background
 				}
 			});
 		}

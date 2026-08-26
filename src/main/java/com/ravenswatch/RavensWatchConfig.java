@@ -25,4 +25,15 @@ public interface RavensWatchConfig extends Config {
 		return "";
 	}
 
+	@ConfigItem(
+			keyName = "upcomingMonthOnly",
+			name = "Upcoming Month Only",
+			description = "Only display events happening within the next 30 days",
+			position = 1
+	)
+	default boolean upcomingMonthOnly() {
+		return true;
+	}
+
+
 }
