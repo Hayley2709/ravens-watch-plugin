@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.events.ChatMessage;
@@ -32,6 +33,7 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 import okhttp3.*;
 
+@Slf4j
 @PluginDescriptor(
 		name = "Raven's Watch Clan",
 		description = "Raven's Watch Clan Info and Broadcasts",
@@ -133,7 +135,7 @@ public class RavensWatchPlugin extends Plugin
 
 			@Override
 			public void onError(String error) {
-				System.err.println("[Raven's Watch] MOTM Fetch Failed: " + error);
+				log.error("MOTM Fetch Failed: {}", error);
 			}
 		});
 	}
@@ -229,7 +231,6 @@ public class RavensWatchPlugin extends Plugin
 		String localName = client.getLocalPlayer().getName().replace('\u00A0', ' ').trim();
 		String cleanMessage = message.replaceAll("<[^>]*>", "").replace('\u00A0', ' ').trim();
 
-		// Most OSRS clan broadcasts start with the player's name (e.g., "PlayerName received a drop: ...")
 		return cleanMessage.toLowerCase().startsWith(localName.toLowerCase());
 	}
 
