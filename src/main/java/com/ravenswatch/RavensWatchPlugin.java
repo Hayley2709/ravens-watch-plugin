@@ -14,6 +14,8 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.api.Client;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.events.ChatMessage;
+import okhttp3.*;
 import java.awt.image.BufferedImage;
 import java.time.temporal.ChronoUnit;
 import java.time.ZonedDateTime;
@@ -26,8 +28,8 @@ import java.util.Set;
 
 @PluginDescriptor(
 		name = "Raven's Watch Clan",
-		description = "Raven's Watch Clan Info",
-		tags = {"calendar", "schedule", "events"}
+		description = "Raven's Watch Clan Info and Broadcasts",
+		tags = {"calendar", "schedule", "events", "drops", "webhook"}
 )
 public class RavensWatchPlugin extends Plugin
 {
@@ -36,16 +38,16 @@ public class RavensWatchPlugin extends Plugin
 	@Inject private RavensWatchClient calendarClient;
 	@Inject private Notifier notifier;
 	@Inject private Client client;
+	@Inject private OkHttpClient okHttpClient;
 
 	private RavensWatchPanel panel;
 	private NavigationButton navButton;
 
-	// Track event IDs/summaries that have already triggered an alert to avoid spamming
 	private final Set<String> notifiedEvents = new HashSet<>();
-	// Keep a local reference of parsed events for the alarm ticker
 	private List<EventAlarmData> activeEvents = new ArrayList<>();
 
-	// Simple wrapper class to hold parsed timestamp data for the notification loop
+	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
 	private static class EventAlarmData {
 		String title;
 		String uniqueId;
@@ -80,6 +82,7 @@ public class RavensWatchPlugin extends Plugin
 
 		clientToolbar.addNavigation(navButton);
 		refreshCalendar();
+		refreshMotm();
 	}
 
 	@Override
@@ -91,30 +94,91 @@ public class RavensWatchPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-// Check if the change belongs to your config group
 		if (event.getGroup().equals("ravenswatch"))
 		{
-// Whenever any config item (like upcomingMonthOnly) changes, refresh immediately
 			refreshCalendar();
+			refreshMotm();
 		}
 	}
 
-	@Schedule(
-			period = 15,
-			unit = ChronoUnit.MINUTES,
-			asynchronous = true
-	)
+	private void refreshMotm()
+	{
+		String motmUrl = "https://gist.githubusercontent.com/Hayley2709/3d693f4116914d3877be79a67f2a402a/raw/39b59a5dee052c51cd9a208201694b9ae4612562/gistfile1.txt";
+
+// Pass motmUrl directly into your HTTP client/request builder here
+
+		{
+			calendarClient.fetchMotm("https://gist.githubusercontent.com/Hayley2709/3d693f4116914d3877be79a67f2a402a/raw/90fe4a91b32e6d191dbca98b7206513f44e5b573/ravenswatch-motm.json", new RavensWatchClient.MotmCallback() {
+				@Override
+				public void onSuccess(RavensWatchClient.MotmResponse response) {
+					if (panel != null && response != null) {
+						panel.updateMotmDisplay(response.name, response.reason);
+					}
+				}
+				@Override
+				public void onError(String error) {}
+			});
+		}
+	}
+
+	@Subscribe
+	public void onChatMessage(ChatMessage event)
+	{
+		if (!config.enableDropLogger() || config.clanWebhookUrl().isEmpty())
+		{
+			return;
+		}
+
+		String message = event.getMessage();
+		String sender = event.getName();
+
+		if (isBroadcastableMessage(message))
+		{
+			sendDiscordEmbedWebhook(config.clanWebhookUrl(), sender, message);
+		}
+	}
+
+	private boolean isBroadcastableMessage(String message)
+	{
+		String lower = message.toLowerCase();
+		return lower.contains("valuable drop:") ||
+				lower.contains("received a drop:") ||
+				lower.contains("pet") ||
+				lower.contains("collection log unlocked");
+	}
+
+	private void sendDiscordEmbedWebhook(String webhookUrl, String playerName, String dropText)
+	{
+		String user = (playerName != null && !playerName.isEmpty()) ? playerName : "Clan Member";
+
+		String jsonPayload = "{" +
+				"\"username\": \"Raven's Watch Bot\"," +
+				"\"embeds\": [{" +
+				"\"title\": \"🎉 " + user + " scored a drop!\"," +
+				"\"description\": \"" + dropText.replace("\"", "\\\"") + "\"," +
+				"\"color\": 3447003" +
+				"}]" +
+				"}";
+
+		RequestBody body = RequestBody.create(JSON, jsonPayload);
+		Request request = new Request.Builder().url(webhookUrl).post(body).build();
+
+		okHttpClient.newCall(request).enqueue(new Callback() {
+			@Override
+			public void onFailure(Call call, java.io.IOException e) {}
+			@Override
+			public void onResponse(Call call, Response response) { response.close(); }
+		});
+	}
+
+	@Schedule(period = 1, unit = ChronoUnit.MINUTES, asynchronous = true)
 	public void fetchCalendarUpdates()
 	{
 		refreshCalendar();
+		refreshMotm();
 	}
 
-	// Runs every 30 seconds to check if any cached event is about to start
-	@Schedule(
-			period = 30,
-			unit = ChronoUnit.SECONDS,
-			asynchronous = true
-	)
+	@Schedule(period = 30, unit = ChronoUnit.SECONDS, asynchronous = true)
 	public void checkEventAlarms()
 	{
 		if (!config.enableNotifications() || activeEvents.isEmpty()) {
@@ -130,11 +194,9 @@ public class RavensWatchPlugin extends Plugin
 					continue;
 				}
 
-// Calculate time remaining until event starts
 				long secondsUntil = ChronoUnit.SECONDS.between(now, event.startTime);
 				long thresholdSeconds = alertMinutes * 60L;
 
-// If we are inside the countdown window and the event hasn't already passed
 				if (secondsUntil > 0 && secondsUntil <= thresholdSeconds) {
 					triggerAlert(event.title, alertMinutes);
 					notifiedEvents.add(event.uniqueId);
@@ -145,10 +207,8 @@ public class RavensWatchPlugin extends Plugin
 
 	private void triggerAlert(String title, int minutes) {
 		String message = "Clan Event '" + title + "' starting in about " + minutes + " minutes!";
-
 		notifier.notify(message);
 
-// Safely send chat message if client is logged in
 		if (client != null && client.getGameState() == net.runelite.api.GameState.LOGGED_IN) {
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", message, null);
 		}
@@ -193,17 +253,14 @@ public class RavensWatchPlugin extends Plugin
 
 							processedEvents.add(new String[]{cleanTitle, cleanDateText});
 
-// Create a reliable unique key based on the title and timestamp
 							String uniqueId = cleanTitle + "_" + localTime.toEpochSecond();
 							newAlarmEvents.add(new EventAlarmData(cleanTitle, uniqueId, localTime));
 						}
 					}
 
-// Update local alarm tracking list safely
 					synchronized (activeEvents) {
 						activeEvents.clear();
 						activeEvents.addAll(newAlarmEvents);
-// Clear notification history using Java 11 compatible collector
 						notifiedEvents.retainAll(activeEvents.stream().map(e -> e.uniqueId).collect(java.util.stream.Collectors.toList()));
 					}
 
@@ -211,9 +268,7 @@ public class RavensWatchPlugin extends Plugin
 				}
 
 				@Override
-				public void onError(String error) {
-// Fail silently in the UI background
-				}
+				public void onError(String error) {}
 			});
 		}
 	}

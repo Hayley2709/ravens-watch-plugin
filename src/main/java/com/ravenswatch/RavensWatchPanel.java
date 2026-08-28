@@ -14,6 +14,9 @@ public class RavensWatchPanel extends PluginPanel {
 
     private final JButton calendarHeaderBtn;
     private final JPanel calendarContentPanel;
+    private final JPanel motmContainer;
+    private final JLabel motmNameLabel;
+    private final JLabel motmReasonLabel;
     private List<String[]> currentEvents;
 
     public RavensWatchPanel() {
@@ -21,15 +24,36 @@ public class RavensWatchPanel extends PluginPanel {
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        // 1. Create the Master Title at the top of the plugin
         JLabel mainTitle = new JLabel("<html><div style='text-align: center;'><strong>Raven's Watch Clan<br>Official Plugin</strong></div></html>");
         mainTitle.setFont(net.runelite.client.ui.FontManager.getRunescapeBoldFont());
         mainTitle.setForeground(Color.WHITE);
         mainTitle.setAlignmentX(JPanel.CENTER_ALIGNMENT);
-        // Add 15px of space underneath the main title so the dropdown doesn't hug it too tightly
         mainTitle.setBorder(new EmptyBorder(5, 0, 15, 0));
 
-        // 2. Create the Collapsible Header Button
+// --- MOTM Card ---
+        motmContainer = new JPanel(new GridLayout(3, 1, 0, 2));
+        motmContainer.setBorder(new EmptyBorder(8, 8, 8, 8));
+        motmContainer.setBackground(net.runelite.client.ui.ColorScheme.DARKER_GRAY_COLOR);
+        motmContainer.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+        motmContainer.setVisible(false); // Hidden until JSON data loads successfully
+
+        JLabel motmHeader = new JLabel("⭐ Golden Raven");
+        motmHeader.setFont(net.runelite.client.ui.FontManager.getRunescapeBoldFont());
+        motmHeader.setForeground(Color.YELLOW);
+
+        motmNameLabel = new JLabel();
+        motmNameLabel.setForeground(Color.WHITE);
+        motmNameLabel.setFont(net.runelite.client.ui.FontManager.getRunescapeBoldFont());
+
+        motmReasonLabel = new JLabel();
+        motmReasonLabel.setForeground(Color.GRAY);
+        motmReasonLabel.setFont(net.runelite.client.ui.FontManager.getRunescapeFont());
+
+        motmContainer.add(motmHeader);
+        motmContainer.add(motmNameLabel);
+        motmContainer.add(motmReasonLabel);
+
+// --- Calendar Section ---
         calendarHeaderBtn = new JButton("▼ Raven's Watch Event Calendar");
         calendarHeaderBtn.setFont(net.runelite.client.ui.FontManager.getRunescapeBoldFont());
         calendarHeaderBtn.setForeground(Color.WHITE);
@@ -38,39 +62,40 @@ public class RavensWatchPanel extends PluginPanel {
         calendarHeaderBtn.setAlignmentX(JPanel.CENTER_ALIGNMENT);
         calendarHeaderBtn.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 30));
 
-        // 3. Create the Container that holds the calendar contents
         calendarContentPanel = new JPanel(new GridLayout(0, 1, 0, 10));
         calendarContentPanel.setBorder(new EmptyBorder(10, 5, 10, 5));
-        calendarContentPanel.setVisible(true); // Open by default on startup
+        calendarContentPanel.setVisible(true);
 
-        // 4. Add the Toggle Action
         calendarHeaderBtn.addActionListener(e -> {
             boolean isVisible = calendarContentPanel.isVisible();
             calendarContentPanel.setVisible(!isVisible);
-
-            if (isVisible) {
-                calendarHeaderBtn.setText("▶ Raven's Watch Event Calendar");
-            } else {
-                calendarHeaderBtn.setText("▼ Raven's Watch Event Calendar");
-            }
-
+            calendarHeaderBtn.setText(isVisible ? "▶ Raven's Watch Event Calendar" : "▼ Raven's Watch Event Calendar");
             revalidate();
             repaint();
         });
 
-        // Assemble the layout (Main title goes first!)
         this.add(mainTitle);
+        this.add(motmContainer);
         this.add(calendarHeaderBtn);
         this.add(calendarContentPanel);
     }
 
+    public void updateMotmDisplay(String name, String reason) {
+        if (name == null || name.isEmpty()) {
+            motmContainer.setVisible(false);
+        } else {
+            motmNameLabel.setText(name);
+            motmReasonLabel.setText(reason != null ? reason : "Outstanding Contribution");
+            motmContainer.setVisible(true);
+        }
+        revalidate();
+        repaint();
+    }
+
     public void updateEventsList(List<String[]> formattedEvents) {
         this.currentEvents = formattedEvents;
-
-        // Clear out old cards inside the content panel only
         calendarContentPanel.removeAll();
 
-        // Timezone helper label at the top of the expanded section
         JLabel tzLabel = new JLabel("<html><font color='gray'>Times adjusted for your local timezone</font></html>");
         tzLabel.setFont(net.runelite.client.ui.FontManager.getRunescapeFont());
         calendarContentPanel.add(tzLabel);
@@ -81,32 +106,27 @@ public class RavensWatchPanel extends PluginPanel {
             calendarContentPanel.add(noEventsLabel);
         } else {
             for (String[] eventData : formattedEvents) {
-                String eventTitle = eventData[0];
-                String eventDate = eventData[1];
-
                 JPanel eventContainer = new JPanel(new GridLayout(2, 1, 0, 2));
                 eventContainer.setBorder(new EmptyBorder(6, 6, 6, 6));
                 eventContainer.setBackground(net.runelite.client.ui.ColorScheme.DARKER_GRAY_COLOR);
 
-                JLabel titleLabel = new JLabel(eventTitle);
+                JLabel titleLabel = new JLabel(eventData[0]);
                 titleLabel.setForeground(Color.WHITE);
                 titleLabel.setFont(net.runelite.client.ui.FontManager.getRunescapeBoldFont());
 
-                JLabel dateLabel = new JLabel(eventDate);
+                JLabel dateLabel = new JLabel(eventData[1]);
                 dateLabel.setForeground(Color.GRAY);
                 dateLabel.setFont(net.runelite.client.ui.FontManager.getRunescapeFont());
 
                 eventContainer.add(titleLabel);
                 eventContainer.add(dateLabel);
-
                 calendarContentPanel.add(eventContainer);
             }
         }
 
-        // Refresh layouts smoothly
         calendarContentPanel.revalidate();
         calendarContentPanel.repaint();
-        this.revalidate();
-        this.repaint();
+        revalidate();
+        repaint();
     }
 }
