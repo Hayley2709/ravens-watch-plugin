@@ -1,5 +1,6 @@
 package com.ravenswatch;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Provides;
@@ -83,6 +84,7 @@ public class RavensWatchPlugin extends Plugin
 	{
 		panel = new RavensWatchPanel();
 
+		// Loads icon from resources
 		BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/Images/RW_Plugin_icon.png");
 
 		navButton = NavigationButton.builder()
@@ -118,17 +120,21 @@ public class RavensWatchPlugin extends Plugin
 
 	private void refreshMotm()
 	{
-		String motmUrl = "https://gist.githubusercontent.com/Hayley2709/3d693f4116914d3877be79a67f2a402a/raw/ravenswatch-motm.json";
+		// Points directly to the GitHub REST API (bypasses raw CDN caching)
+		String motmApiUrl = "https://api.github.com/gists/3d693f4116914d3877be79a67f2a402a";
 
-		calendarClient.fetchMotm(motmUrl, new RavensWatchClient.MotmCallback() {
+		calendarClient.fetchMotm(motmApiUrl, new RavensWatchClient.MotmCallback() {
 			@Override
 			public void onSuccess(RavensWatchClient.MotmResponse response) {
 				if (panel != null && response != null) {
 					SwingUtilities.invokeLater(() -> panel.updateMotmDisplay(response.name, response.reason));
 				}
 			}
+
 			@Override
-			public void onError(String error) {}
+			public void onError(String error) {
+				System.err.println("[Raven's Watch] MOTM Fetch Failed: " + error);
+			}
 		});
 	}
 
@@ -200,7 +206,7 @@ public class RavensWatchPlugin extends Plugin
 			case CLAN_MESSAGE:
 			case CLAN_GIM_MESSAGE:
 				String message = event.getMessage();
-				if (isBroadcastableMessage(message))
+				if (isBroadcastableMessage(message) && isLocalPlayerEvent(message))
 				{
 					sendDiscordEmbedWebhook(config.clanWebhookUrl(), message);
 				}
@@ -208,6 +214,23 @@ public class RavensWatchPlugin extends Plugin
 			default:
 				break;
 		}
+	}
+
+	/**
+	 * Checks if the broadcast message belongs to the local player running this client.
+	 */
+	private boolean isLocalPlayerEvent(String message)
+	{
+		if (client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null)
+		{
+			return false;
+		}
+
+		String localName = client.getLocalPlayer().getName().replace('\u00A0', ' ').trim();
+		String cleanMessage = message.replaceAll("<[^>]*>", "").replace('\u00A0', ' ').trim();
+
+		// Most OSRS clan broadcasts start with the player's name (e.g., "PlayerName received a drop: ...")
+		return cleanMessage.toLowerCase().startsWith(localName.toLowerCase());
 	}
 
 	private boolean isBroadcastableMessage(String message)

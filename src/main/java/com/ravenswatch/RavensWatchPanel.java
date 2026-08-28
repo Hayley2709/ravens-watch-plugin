@@ -116,10 +116,20 @@ public class RavensWatchPanel extends PluginPanel {
             motmNameLabel.setText(name);
 
             String displayReason = (reason != null && !reason.isEmpty()) ? reason : "Outstanding Contribution";
-            motmReasonLabel.setText("<html><body style='width: 150px; word-wrap: break-word;'>" + displayReason + "</body></html>");
+            motmReasonLabel.setText("<html><body style='width: 170px; word-wrap: break-word;'>" + displayReason + "</body></html>");
 
             motmContainer.setVisible(true);
         }
+
+        // Force motmContainer and its parent container to re-calculate layout sizes
+        motmContainer.revalidate();
+        motmContainer.repaint();
+
+        if (getParent() != null) {
+            getParent().revalidate();
+            getParent().repaint();
+        }
+
         revalidate();
         repaint();
     }
