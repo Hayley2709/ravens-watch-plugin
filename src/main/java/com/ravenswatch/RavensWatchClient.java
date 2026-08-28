@@ -15,6 +15,9 @@ public class RavensWatchClient
     @Inject
     private OkHttpClient okHttpClient;
 
+    @Inject
+    private Gson gson; // Added missing semicolon here
+
     public interface CalendarCallback
     {
         void onSuccess(CalendarResponse response);
@@ -87,7 +90,8 @@ public class RavensWatchClient
                 try
                 {
                     String body = response.body().string();
-                    CalendarResponse calResponse = new Gson().fromJson(body, CalendarResponse.class);
+                    // Changed new Gson() to injected gson instance
+                    CalendarResponse calResponse = gson.fromJson(body, CalendarResponse.class);
                     callback.onSuccess(calResponse);
                 }
                 catch (Exception e)
@@ -137,7 +141,8 @@ public class RavensWatchClient
                     JsonObject fileData = filesObject.get("ravenswatch-motm.json").getAsJsonObject();
                     String rawJsonContent = fileData.get("content").getAsString();
 
-                    MotmResponse motm = new Gson().fromJson(rawJsonContent, MotmResponse.class);
+                    // Changed new Gson() to injected gson instance
+                    MotmResponse motm = gson.fromJson(rawJsonContent, MotmResponse.class);
                     callback.onSuccess(motm);
                 }
                 catch (Exception e)
