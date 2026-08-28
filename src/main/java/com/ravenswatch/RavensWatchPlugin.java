@@ -103,7 +103,7 @@ public class RavensWatchPlugin extends Plugin
 
 	private void refreshMotm()
 	{
-		String motmUrl = "https://gist.githubusercontent.com/Hayley2709/3d693f4116914d3877be79a67f2a402a/raw/39b59a5dee052c51cd9a208201694b9ae4612562/gistfile1.txt";
+		String motmUrl = "https://gist.githubusercontent.com/Hayley2709/3d693f4116914d3877be79a67f2a402a/raw/ravenswatch-motm.json";
 
 // Pass motmUrl directly into your HTTP client/request builder here
 
