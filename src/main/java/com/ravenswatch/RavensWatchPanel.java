@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.util.ArrayList;
 import java.util.List;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -18,6 +19,12 @@ public class RavensWatchPanel extends PluginPanel {
 
     private final JButton calendarHeaderBtn;
     private final JPanel calendarContentPanel;
+
+    // Recent Drops components
+    private final JButton dropsHeaderBtn;
+    private final JPanel dropsContentPanel;
+    private final List<String> recentDrops = new ArrayList<>();
+
     private final JPanel motmContainer;
     private final JLabel motmNameLabel;
     private final JLabel motmReasonLabel;
@@ -94,6 +101,29 @@ public class RavensWatchPanel extends PluginPanel {
             repaint();
         });
 
+        // --- Recent Drops Section ---
+        dropsHeaderBtn = new JButton("▼ Recent Clan Broadcasts");
+        dropsHeaderBtn.setFont(FontManager.getRunescapeBoldFont());
+        dropsHeaderBtn.setForeground(Color.WHITE);
+        dropsHeaderBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        dropsHeaderBtn.setFocusPainted(false);
+        dropsHeaderBtn.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+        dropsHeaderBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+
+        dropsContentPanel = new JPanel(new GridLayout(0, 1, 0, 6));
+        dropsContentPanel.setBorder(new EmptyBorder(10, 5, 10, 5));
+        dropsContentPanel.setVisible(true);
+
+        dropsHeaderBtn.addActionListener(e -> {
+            boolean isVisible = dropsContentPanel.isVisible();
+            dropsContentPanel.setVisible(!isVisible);
+            dropsHeaderBtn.setText(isVisible ? "▶ Recent Clan Broadcasts" : "▼ Recent Clan Broadcasts");
+            revalidate();
+            repaint();
+        });
+
+        refreshDropsUI();
+
         // Assemble Layout
         this.add(mainTitle);
         this.add(memberCountLabel);
@@ -101,10 +131,50 @@ public class RavensWatchPanel extends PluginPanel {
         this.add(Box.createRigidArea(new Dimension(0, 10)));
         this.add(calendarHeaderBtn);
         this.add(calendarContentPanel);
+        this.add(Box.createRigidArea(new Dimension(0, 10)));
+        this.add(dropsHeaderBtn);
+        this.add(dropsContentPanel);
     }
 
     public void setMemberCount(String text) {
         memberCountLabel.setText(text);
+        revalidate();
+        repaint();
+    }
+
+    public void addRecentDrop(String dropText) {
+        recentDrops.add(0, dropText);
+        if (recentDrops.size() > 20) {
+            recentDrops.remove(recentDrops.size() - 1);
+        }
+        refreshDropsUI();
+    }
+
+    private void refreshDropsUI() {
+        dropsContentPanel.removeAll();
+
+        if (recentDrops.isEmpty()) {
+            JLabel noDropsLabel = new JLabel("No recent drops logged yet.");
+            noDropsLabel.setForeground(Color.GRAY);
+            noDropsLabel.setFont(FontManager.getRunescapeFont());
+            dropsContentPanel.add(noDropsLabel);
+        } else {
+            for (String drop : recentDrops) {
+                JPanel dropCard = new JPanel(new GridLayout(1, 1));
+                dropCard.setBorder(new EmptyBorder(4, 6, 4, 6));
+                dropCard.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
+                JLabel dropLabel = new JLabel("<html><style>body { width: 170px; word-wrap: break-word; }</style>" + drop + "</html>");
+                dropLabel.setForeground(Color.WHITE);
+                dropLabel.setFont(FontManager.getRunescapeFont());
+
+                dropCard.add(dropLabel);
+                dropsContentPanel.add(dropCard);
+            }
+        }
+
+        dropsContentPanel.revalidate();
+        dropsContentPanel.repaint();
         revalidate();
         repaint();
     }

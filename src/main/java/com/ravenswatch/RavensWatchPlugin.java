@@ -86,7 +86,6 @@ public class RavensWatchPlugin extends Plugin
 	{
 		panel = new RavensWatchPanel();
 
-		// Loads icon from resources
 		BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/Images/RW_Plugin_icon.png");
 
 		navButton = NavigationButton.builder()
@@ -122,7 +121,6 @@ public class RavensWatchPlugin extends Plugin
 
 	private void refreshMotm()
 	{
-		// Points directly to the GitHub REST API (bypasses raw CDN caching)
 		String motmApiUrl = "https://api.github.com/gists/3d693f4116914d3877be79a67f2a402a";
 
 		calendarClient.fetchMotm(motmApiUrl, new RavensWatchClient.MotmCallback() {
@@ -211,6 +209,12 @@ public class RavensWatchPlugin extends Plugin
 				if (isBroadcastableMessage(message) && isLocalPlayerEvent(message))
 				{
 					sendDiscordEmbedWebhook(config.clanWebhookUrl(), message);
+
+					String cleanMessage = message.replaceAll("<[^>]*>", "").trim();
+					if (panel != null)
+					{
+						panel.addRecentDrop(cleanMessage);
+					}
 				}
 				break;
 			default:
@@ -218,9 +222,6 @@ public class RavensWatchPlugin extends Plugin
 		}
 	}
 
-	/**
-	 * Checks if the broadcast message belongs to the local player running this client.
-	 */
 	private boolean isLocalPlayerEvent(String message)
 	{
 		if (client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null)
