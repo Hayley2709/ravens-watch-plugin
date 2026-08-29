@@ -1,15 +1,17 @@
 package com.ravenswatch;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -112,8 +114,9 @@ public class RavensWatchClient
                     JsonObject fileData = filesObject.get("ravenswatch-motm.json").getAsJsonObject();
                     String rawJsonContent = fileData.get("content").getAsString();
 
-                    MotmResponse motm = gson.fromJson(rawJsonContent, MotmResponse.class);
-                    callback.onSuccess(motm);
+                    Type listType = new TypeToken<List<String>>(){}.getType();
+                    List<String> ravensList = gson.fromJson(rawJsonContent, listType);
+                    callback.onSuccess(ravensList);
                 }
                 catch (Exception e)
                 {
@@ -135,7 +138,7 @@ public class RavensWatchClient
 
     public interface MotmCallback
     {
-        void onSuccess(MotmResponse response);
+        void onSuccess(List<String> ravensList);
         void onError(String error);
     }
 
@@ -153,21 +156,5 @@ public class RavensWatchClient
     public static class EventTime
     {
         public String dateTime;
-    }
-
-    public static class GithubGistResponse
-    {
-        public java.util.Map<String, GistFile> files;
-    }
-
-    public static class GistFile
-    {
-        public String content;
-    }
-
-    public static class MotmResponse
-    {
-        public String name;
-        public String reason;
     }
 }

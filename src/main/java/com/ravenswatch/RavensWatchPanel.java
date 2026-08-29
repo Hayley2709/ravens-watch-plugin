@@ -27,8 +27,6 @@ public class RavensWatchPanel extends PluginPanel {
     private final List<String> recentDrops = new ArrayList<>();
 
     private final JPanel motmContainer;
-    private final JLabel motmNameLabel;
-    private final JLabel motmReasonLabel;
     private final JLabel memberCountLabel;
     private List<String[]> currentEvents;
 
@@ -57,34 +55,14 @@ public class RavensWatchPanel extends PluginPanel {
         memberCountLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         memberCountLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        // --- MOTM Card ---
+        // --- Golden Ravens Container ---
         motmContainer = new JPanel();
         motmContainer.setLayout(new BoxLayout(motmContainer, BoxLayout.Y_AXIS));
         motmContainer.setBorder(new EmptyBorder(8, 8, 8, 8));
         motmContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         motmContainer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        motmContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        motmContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         motmContainer.setVisible(false);
-
-        JLabel motmHeader = new JLabel("⭐ Golden Raven ⭐");
-        motmHeader.setFont(FontManager.getRunescapeBoldFont());
-        motmHeader.setForeground(Color.decode("#FFD700"));
-        motmHeader.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-
-        motmNameLabel = new JLabel();
-        motmNameLabel.setForeground(Color.WHITE);
-        motmNameLabel.setFont(FontManager.getRunescapeBoldFont());
-        motmNameLabel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        motmNameLabel.setBorder(new EmptyBorder(2, 0, 4, 0));
-
-        motmReasonLabel = new JLabel();
-        motmReasonLabel.setForeground(Color.LIGHT_GRAY);
-        motmReasonLabel.setFont(FontManager.getRunescapeFont());
-        motmReasonLabel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-
-        motmContainer.add(motmHeader);
-        motmContainer.add(motmNameLabel);
-        motmContainer.add(motmReasonLabel);
 
         // --- Calendar Section ---
         calendarHeaderBtn = new JButton("<html><body style='width: 155px;'>▼ Raven's Watch Event Calendar</body></html>");
@@ -210,16 +188,28 @@ public class RavensWatchPanel extends PluginPanel {
         repaint();
     }
 
-    public void updateMotmDisplay(String name, String reason) {
+    public void updateGoldenRavensDisplay(List<String> ravensList) {
         SwingUtilities.invokeLater(() -> {
-            if (name == null || name.isEmpty()) {
+            motmContainer.removeAll();
+
+            JLabel motmHeader = new JLabel("⭐ Golden Ravens ⭐");
+            motmHeader.setFont(FontManager.getRunescapeBoldFont());
+            motmHeader.setForeground(Color.decode("#FFD700"));
+            motmHeader.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+            motmContainer.add(motmHeader);
+            motmContainer.add(Box.createRigidArea(new Dimension(0, 4)));
+
+            if (ravensList == null || ravensList.isEmpty()) {
                 motmContainer.setVisible(false);
             } else {
-                motmNameLabel.setText("<html><body style='width: 170px; word-wrap: break-word;'>" + name + "</body></html>");
-
-                String displayReason = (reason != null && !reason.isEmpty()) ? reason : "Outstanding Contribution";
-                motmReasonLabel.setText("<html><body style='width: 170px; word-wrap: break-word;'>" + displayReason + "</body></html>");
-
+                for (String raven : ravensList) {
+                    JLabel ravenLabel = new JLabel("<html><body style='width: 170px; word-wrap: break-word;'>• " + raven + "</body></html>");
+                    ravenLabel.setForeground(Color.WHITE);
+                    ravenLabel.setFont(FontManager.getRunescapeFont());
+                    ravenLabel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+                    ravenLabel.setBorder(new EmptyBorder(1, 0, 2, 0));
+                    motmContainer.add(ravenLabel);
+                }
                 motmContainer.setVisible(true);
             }
 
