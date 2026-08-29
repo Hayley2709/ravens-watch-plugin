@@ -84,7 +84,7 @@ public class RavensWatchPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		panel = new RavensWatchPanel();
+		panel = new RavensWatchPanel(this);
 
 		BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/Images/RW_Plugin_icon.png");
 
@@ -193,9 +193,33 @@ public class RavensWatchPlugin extends Plugin
 		});
 	}
 
+	public void simulateTestBroadcast()
+	{
+		String mockMessage = "TestPlayer received a drop: Twisted bow (1)";
+
+		// 1. Update the UI panel immediately
+		if (panel != null)
+		{
+			panel.addRecentDrop(mockMessage);
+		}
+
+		// 2. Test Discord webhook integration if configured
+		if (!config.clanWebhookUrl().isEmpty())
+		{
+			sendDiscordEmbedWebhook(config.clanWebhookUrl(), mockMessage);
+		}
+	}
+
 	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
+		// Quick test trigger command in game chat
+		if (event.getType() == ChatMessageType.PUBLICCHAT && event.getMessage().equalsIgnoreCase("::testdrop"))
+		{
+			simulateTestBroadcast();
+			return;
+		}
+
 		if (!config.enableDropLogger() || config.clanWebhookUrl().isEmpty())
 		{
 			return;

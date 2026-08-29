@@ -5,10 +5,11 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.BoxLayout;
 import javax.swing.Box;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 import net.runelite.client.ui.ColorScheme;
@@ -31,33 +32,38 @@ public class RavensWatchPanel extends PluginPanel {
     private final JLabel memberCountLabel;
     private List<String[]> currentEvents;
 
-    public RavensWatchPanel() {
+    private RavensWatchPlugin plugin;
+
+    public RavensWatchPanel(RavensWatchPlugin plugin) {
         super();
+        this.plugin = plugin;
 
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         // --- Title ---
-        JLabel mainTitle = new JLabel("<html><div style='text-align: center;'><strong>Raven's Watch Clan<br>Official Plugin</strong></div></html>");
+        JLabel mainTitle = new JLabel("<html><body style='width: 170px; text-align: center; word-wrap: break-word;'><strong>Raven's Watch Clan<br>Official Plugin</strong></body></html>", SwingConstants.CENTER);
         mainTitle.setFont(FontManager.getRunescapeBoldFont());
         mainTitle.setForeground(Color.WHITE);
-        mainTitle.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+        mainTitle.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        mainTitle.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
         mainTitle.setBorder(new EmptyBorder(5, 0, 5, 0));
 
         // --- Member Count (Wise Old Man) ---
-        memberCountLabel = new JLabel("Total Members: Loading...");
+        memberCountLabel = new JLabel("Total Members: Loading...", SwingConstants.CENTER);
         memberCountLabel.setFont(FontManager.getRunescapeFont());
         memberCountLabel.setForeground(ColorScheme.GRAND_EXCHANGE_PRICE);
-        memberCountLabel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
-        memberCountLabel.setBorder(new EmptyBorder(0, 0, 15, 0));
+        memberCountLabel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        memberCountLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        memberCountLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
 
         // --- MOTM Card ---
         motmContainer = new JPanel();
         motmContainer.setLayout(new BoxLayout(motmContainer, BoxLayout.Y_AXIS));
         motmContainer.setBorder(new EmptyBorder(8, 8, 8, 8));
         motmContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        motmContainer.setAlignmentX(JPanel.CENTER_ALIGNMENT);
-        motmContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        motmContainer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        motmContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
         motmContainer.setVisible(false);
 
         JLabel motmHeader = new JLabel("⭐ Golden Raven ⭐");
@@ -81,43 +87,51 @@ public class RavensWatchPanel extends PluginPanel {
         motmContainer.add(motmReasonLabel);
 
         // --- Calendar Section ---
-        calendarHeaderBtn = new JButton("▼ Raven's Watch Event Calendar");
+        calendarHeaderBtn = new JButton("<html><body style='width: 155px;'>▼ Raven's Watch Event Calendar</body></html>");
         calendarHeaderBtn.setFont(FontManager.getRunescapeBoldFont());
         calendarHeaderBtn.setForeground(Color.WHITE);
         calendarHeaderBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
         calendarHeaderBtn.setFocusPainted(false);
-        calendarHeaderBtn.setAlignmentX(JPanel.CENTER_ALIGNMENT);
-        calendarHeaderBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        calendarHeaderBtn.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        calendarHeaderBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
-        calendarContentPanel = new JPanel(new GridLayout(0, 1, 0, 10));
-        calendarContentPanel.setBorder(new EmptyBorder(10, 5, 10, 5));
+        calendarContentPanel = new JPanel();
+        calendarContentPanel.setLayout(new BoxLayout(calendarContentPanel, BoxLayout.Y_AXIS));
+        calendarContentPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
+        calendarContentPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         calendarContentPanel.setVisible(true);
 
         calendarHeaderBtn.addActionListener(e -> {
             boolean isVisible = calendarContentPanel.isVisible();
             calendarContentPanel.setVisible(!isVisible);
-            calendarHeaderBtn.setText(isVisible ? "▶ Raven's Watch Event Calendar" : "▼ Raven's Watch Event Calendar");
+            calendarHeaderBtn.setText(isVisible ?
+                    "<html><body style='width: 155px;'>▶ Raven's Watch Event Calendar</body></html>" :
+                    "<html><body style='width: 155px;'>▼ Raven's Watch Event Calendar</body></html>");
             revalidate();
             repaint();
         });
 
         // --- Recent Drops Section ---
-        dropsHeaderBtn = new JButton("▼ Recent Clan Broadcasts");
+        dropsHeaderBtn = new JButton("<html><body style='width: 155px;'>▼ Recent Clan Broadcasts</body></html>");
         dropsHeaderBtn.setFont(FontManager.getRunescapeBoldFont());
         dropsHeaderBtn.setForeground(Color.WHITE);
         dropsHeaderBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
         dropsHeaderBtn.setFocusPainted(false);
-        dropsHeaderBtn.setAlignmentX(JPanel.CENTER_ALIGNMENT);
-        dropsHeaderBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        dropsHeaderBtn.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        dropsHeaderBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
-        dropsContentPanel = new JPanel(new GridLayout(0, 1, 0, 6));
-        dropsContentPanel.setBorder(new EmptyBorder(10, 5, 10, 5));
+        dropsContentPanel = new JPanel();
+        dropsContentPanel.setLayout(new BoxLayout(dropsContentPanel, BoxLayout.Y_AXIS));
+        dropsContentPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
+        dropsContentPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
         dropsContentPanel.setVisible(true);
 
         dropsHeaderBtn.addActionListener(e -> {
             boolean isVisible = dropsContentPanel.isVisible();
             dropsContentPanel.setVisible(!isVisible);
-            dropsHeaderBtn.setText(isVisible ? "▶ Recent Clan Broadcasts" : "▼ Recent Clan Broadcasts");
+            dropsHeaderBtn.setText(isVisible ?
+                    "<html><body style='width: 155px;'>▶ Recent Clan Broadcasts</body></html>" :
+                    "<html><body style='width: 155px;'>▼ Recent Clan Broadcasts</body></html>");
             revalidate();
             repaint();
         });
@@ -126,7 +140,9 @@ public class RavensWatchPanel extends PluginPanel {
 
         // Assemble Layout
         this.add(mainTitle);
+        this.add(Box.createRigidArea(new Dimension(0, 8)));
         this.add(memberCountLabel);
+        this.add(Box.createRigidArea(new Dimension(0, 5)));
         this.add(motmContainer);
         this.add(Box.createRigidArea(new Dimension(0, 10)));
         this.add(calendarHeaderBtn);
@@ -137,17 +153,21 @@ public class RavensWatchPanel extends PluginPanel {
     }
 
     public void setMemberCount(String text) {
-        memberCountLabel.setText(text);
-        revalidate();
-        repaint();
+        SwingUtilities.invokeLater(() -> {
+            memberCountLabel.setText(text);
+            revalidate();
+            repaint();
+        });
     }
 
     public void addRecentDrop(String dropText) {
-        recentDrops.add(0, dropText);
-        if (recentDrops.size() > 20) {
-            recentDrops.remove(recentDrops.size() - 1);
-        }
-        refreshDropsUI();
+        SwingUtilities.invokeLater(() -> {
+            recentDrops.add(0, dropText);
+            if (recentDrops.size() > 20) {
+                recentDrops.remove(recentDrops.size() - 1);
+            }
+            refreshDropsUI();
+        });
     }
 
     private void refreshDropsUI() {
@@ -157,19 +177,30 @@ public class RavensWatchPanel extends PluginPanel {
             JLabel noDropsLabel = new JLabel("No recent drops logged yet.");
             noDropsLabel.setForeground(Color.GRAY);
             noDropsLabel.setFont(FontManager.getRunescapeFont());
+            noDropsLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
             dropsContentPanel.add(noDropsLabel);
         } else {
-            for (String drop : recentDrops) {
-                JPanel dropCard = new JPanel(new GridLayout(1, 1));
-                dropCard.setBorder(new EmptyBorder(4, 6, 4, 6));
-                dropCard.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+            for (int i = 0; i < recentDrops.size(); i++) {
+                String drop = recentDrops.get(i);
 
-                JLabel dropLabel = new JLabel("<html><style>body { width: 170px; word-wrap: break-word; }</style>" + drop + "</html>");
+                JPanel dropCard = new JPanel();
+                dropCard.setLayout(new BoxLayout(dropCard, BoxLayout.Y_AXIS));
+                dropCard.setBorder(new EmptyBorder(6, 8, 6, 8));
+                dropCard.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                dropCard.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+                dropCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 65));
+
+                JLabel dropLabel = new JLabel("<html><body style='width: 170px; word-wrap: break-word;'>" + drop + "</body></html>");
                 dropLabel.setForeground(Color.WHITE);
                 dropLabel.setFont(FontManager.getRunescapeFont());
+                dropLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
 
                 dropCard.add(dropLabel);
                 dropsContentPanel.add(dropCard);
+
+                if (i < recentDrops.size() - 1) {
+                    dropsContentPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+                }
             }
         }
 
@@ -180,65 +211,83 @@ public class RavensWatchPanel extends PluginPanel {
     }
 
     public void updateMotmDisplay(String name, String reason) {
-        if (name == null || name.isEmpty()) {
-            motmContainer.setVisible(false);
-        } else {
-            motmNameLabel.setText(name);
+        SwingUtilities.invokeLater(() -> {
+            if (name == null || name.isEmpty()) {
+                motmContainer.setVisible(false);
+            } else {
+                motmNameLabel.setText("<html><body style='width: 170px; word-wrap: break-word;'>" + name + "</body></html>");
 
-            String displayReason = (reason != null && !reason.isEmpty()) ? reason : "Outstanding Contribution";
-            motmReasonLabel.setText("<html><body style='width: 170px; word-wrap: break-word;'>" + displayReason + "</body></html>");
+                String displayReason = (reason != null && !reason.isEmpty()) ? reason : "Outstanding Contribution";
+                motmReasonLabel.setText("<html><body style='width: 170px; word-wrap: break-word;'>" + displayReason + "</body></html>");
 
-            motmContainer.setVisible(true);
-        }
+                motmContainer.setVisible(true);
+            }
 
-        // Force motmContainer and its parent container to re-calculate layout sizes
-        motmContainer.revalidate();
-        motmContainer.repaint();
+            motmContainer.revalidate();
+            motmContainer.repaint();
 
-        if (getParent() != null) {
-            getParent().revalidate();
-            getParent().repaint();
-        }
+            if (getParent() != null) {
+                getParent().revalidate();
+                getParent().repaint();
+            }
 
-        revalidate();
-        repaint();
+            revalidate();
+            repaint();
+        });
     }
 
     public void updateEventsList(List<String[]> formattedEvents) {
-        this.currentEvents = formattedEvents;
-        calendarContentPanel.removeAll();
+        SwingUtilities.invokeLater(() -> {
+            this.currentEvents = formattedEvents;
+            calendarContentPanel.removeAll();
 
-        JLabel tzLabel = new JLabel("<html><font color='gray'>Times adjusted for your local timezone</font></html>");
-        tzLabel.setFont(FontManager.getRunescapeFont());
-        calendarContentPanel.add(tzLabel);
+            JLabel tzLabel = new JLabel("<html><font color='gray'>Times adjusted for your local timezone</font></html>");
+            tzLabel.setFont(FontManager.getRunescapeFont());
+            tzLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+            calendarContentPanel.add(tzLabel);
+            calendarContentPanel.add(Box.createRigidArea(new Dimension(0, 6)));
 
-        if (formattedEvents == null || formattedEvents.isEmpty()) {
-            JLabel noEventsLabel = new JLabel("No upcoming events found.");
-            noEventsLabel.setForeground(Color.GRAY);
-            calendarContentPanel.add(noEventsLabel);
-        } else {
-            for (String[] eventData : formattedEvents) {
-                JPanel eventContainer = new JPanel(new GridLayout(2, 1, 0, 2));
-                eventContainer.setBorder(new EmptyBorder(6, 6, 6, 6));
-                eventContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+            if (formattedEvents == null || formattedEvents.isEmpty()) {
+                JLabel noEventsLabel = new JLabel("No upcoming events found.");
+                noEventsLabel.setForeground(Color.GRAY);
+                noEventsLabel.setFont(FontManager.getRunescapeFont());
+                noEventsLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+                calendarContentPanel.add(noEventsLabel);
+            } else {
+                for (int i = 0; i < formattedEvents.size(); i++) {
+                    String[] eventData = formattedEvents.get(i);
 
-                JLabel titleLabel = new JLabel(eventData[0]);
-                titleLabel.setForeground(Color.WHITE);
-                titleLabel.setFont(FontManager.getRunescapeBoldFont());
+                    JPanel eventContainer = new JPanel();
+                    eventContainer.setLayout(new BoxLayout(eventContainer, BoxLayout.Y_AXIS));
+                    eventContainer.setBorder(new EmptyBorder(6, 8, 6, 8));
+                    eventContainer.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                    eventContainer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+                    eventContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 65));
 
-                JLabel dateLabel = new JLabel(eventData[1]);
-                dateLabel.setForeground(Color.GRAY);
-                dateLabel.setFont(FontManager.getRunescapeFont());
+                    JLabel titleLabel = new JLabel("<html><body style='width: 170px; word-wrap: break-word;'>" + eventData[0] + "</body></html>");
+                    titleLabel.setForeground(Color.WHITE);
+                    titleLabel.setFont(FontManager.getRunescapeBoldFont());
+                    titleLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
 
-                eventContainer.add(titleLabel);
-                eventContainer.add(dateLabel);
-                calendarContentPanel.add(eventContainer);
+                    JLabel dateLabel = new JLabel("<html><body style='width: 170px; word-wrap: break-word;'><font color='gray'>" + eventData[1] + "</font></body></html>");
+                    dateLabel.setFont(FontManager.getRunescapeFont());
+                    dateLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+                    dateLabel.setBorder(new EmptyBorder(2, 0, 0, 0));
+
+                    eventContainer.add(titleLabel);
+                    eventContainer.add(dateLabel);
+                    calendarContentPanel.add(eventContainer);
+
+                    if (i < formattedEvents.size() - 1) {
+                        calendarContentPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+                    }
+                }
             }
-        }
 
-        calendarContentPanel.revalidate();
-        calendarContentPanel.repaint();
-        revalidate();
-        repaint();
+            calendarContentPanel.revalidate();
+            calendarContentPanel.repaint();
+            revalidate();
+            repaint();
+        });
     }
 }

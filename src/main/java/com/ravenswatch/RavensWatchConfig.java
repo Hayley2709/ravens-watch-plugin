@@ -3,101 +3,86 @@ package com.ravenswatch;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Range;
 
 @ConfigGroup("ravenswatch")
-public interface RavensWatchConfig extends Config {
-
-	@ConfigSection(
-			name = "Calendar & Alarms",
-			description = "Google Calendar sync and event notifications",
-			position = 1
-	)
-	String calendarSection = "calendarSection";
-
-	@ConfigSection(
-			name = "Discord Integration",
-			description = "Drop logger and clan broadcast settings",
-			position = 2
-	)
-	String webhookSection = "webhookSection";
-
-	// --- Calendar & Alarms ---
+public interface RavensWatchConfig extends Config
+{
 	@ConfigItem(
 			keyName = "apiKey",
-			name = "API Key",
-			description = "Your Google Cloud Calendar API Key.",
-			section = calendarSection,
+			name = "Google Calendar API Key",
+			description = "Your Google Calendar API key for fetching events",
 			position = 1
 	)
-	default String apiKey() {
+	default String apiKey()
+	{
 		return "";
 	}
 
 	@ConfigItem(
 			keyName = "calendarId",
 			name = "Calendar ID",
-			description = "The Google Calendar ID.",
-			section = calendarSection,
+			description = "The Google Calendar ID (e.g., email address or public ID)",
 			position = 2
 	)
-	default String calendarId() {
+	default String calendarId()
+	{
 		return "";
 	}
 
 	@ConfigItem(
 			keyName = "upcomingMonthOnly",
 			name = "Upcoming Month Only",
-			description = "Only display events happening within the next 30 days",
-			section = calendarSection,
+			description = "Only display events scheduled within the next month",
 			position = 3
 	)
-	default boolean upcomingMonthOnly() {
+	default boolean upcomingMonthOnly()
+	{
 		return true;
 	}
 
 	@ConfigItem(
 			keyName = "enableNotifications",
-			name = "Event Notifications",
-			description = "Enable alerts before scheduled clan events start",
-			section = calendarSection,
+			name = "Enable Event Notifications",
+			description = "Receive desktop and chat reminders before clan events start",
 			position = 4
 	)
-	default boolean enableNotifications() {
+	default boolean enableNotifications()
+	{
 		return true;
 	}
 
+	@Range(min = 1, max = 60)
 	@ConfigItem(
 			keyName = "notificationMinutes",
-			name = "Alert Time (Minutes)",
-			description = "How many minutes before an event to trigger the notification",
-			section = calendarSection,
+			name = "Notification Minutes",
+			description = "How many minutes before an event to trigger a reminder",
 			position = 5
 	)
-	default int notificationMinutes() {
-		return 10;
-	}
-
-	// --- Webhooks & Integration ---
-	@ConfigItem(
-			keyName = "clanWebhookUrl",
-			name = "Clan Discord Webhook",
-			description = "Paste your Discord channel webhook URL for drops and broadcasts",
-			section = webhookSection,
-			position = 6
-	)
-	default String clanWebhookUrl() {
-		return "";
+	default int notificationMinutes()
+	{
+		return 15;
 	}
 
 	@ConfigItem(
 			keyName = "enableDropLogger",
-			name = "Enable Drop Logger",
-			description = "Broadcast valuable drops to the clan Discord channel",
-			section = webhookSection,
+			name = "Enable Clan Drop Logger",
+			description = "Log valuable clan drops and milestones to Discord",
+			position = 6
+	)
+	default boolean enableDropLogger()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+			keyName = "clanWebhookUrl",
+			name = "Discord Webhook URL",
+			description = "The Discord webhook URL where clan drop embeds will be posted",
 			position = 7
 	)
-	default boolean enableDropLogger() {
-		return true;
+	default String clanWebhookUrl()
+	{
+		return "";
 	}
 }

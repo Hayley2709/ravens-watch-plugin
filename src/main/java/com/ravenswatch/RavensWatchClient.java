@@ -1,72 +1,45 @@
 package com.ravenswatch;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import okhttp3.*;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.HttpUrl;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 @Singleton
 public class RavensWatchClient
 {
-    @Inject
-    private OkHttpClient okHttpClient;
+    private final OkHttpClient okHttpClient;
+    private final Gson gson;
 
     @Inject
-    private Gson gson; // Added missing semicolon here
-
-    public interface CalendarCallback
+    public RavensWatchClient(OkHttpClient okHttpClient, Gson gson)
     {
-        void onSuccess(CalendarResponse response);
-        void onError(String error);
-    }
-
-    public interface MotmCallback
-    {
-        void onSuccess(MotmResponse response);
-        void onError(String error);
-    }
-
-    public static class CalendarResponse
-    {
-        public List<CalendarEvent> items;
-    }
-
-    public static class CalendarEvent
-    {
-        public String summary;
-        public EventTime start;
-    }
-
-    public static class EventTime
-    {
-        public String dateTime;
-    }
-
-    public static class MotmResponse
-    {
-        public String name;
-        public String reason;
+        this.okHttpClient = okHttpClient;
+        this.gson = gson;
     }
 
     public void fetchEvents(String apiKey, String calendarId, CalendarCallback callback)
     {
-        HttpUrl url = new HttpUrl.Builder()
-                .scheme("https")
-                .host("www.googleapis.com")
-                .addPathSegments("calendar/v3/calendars")
-                .addPathSegment(calendarId)
-                .addPathSegment("events")
+        HttpUrl url = HttpUrl.parse("https://www.googleapis.com/calendar/v3/calendars/" + calendarId + "/events")
+                .newBuilder()
                 .addQueryParameter("key", apiKey)
                 .addQueryParameter("singleEvents", "true")
                 .addQueryParameter("orderBy", "startTime")
+                .addQueryParameter("timeMin", java.time.Instant.now().toString())
                 .build();
 
         Request request = new Request.Builder()
                 .url(url)
+                .header("User-Agent", "RavensWatch-RuneLite-Plugin")
                 .build();
 
         okHttpClient.newCall(request).enqueue(new Callback()
@@ -82,21 +55,19 @@ public class RavensWatchClient
             {
                 if (!response.isSuccessful())
                 {
-                    callback.onError("HTTP " + response.code());
+                    callback.onError("Server responded with code " + response.code());
                     response.close();
                     return;
                 }
 
                 try
                 {
-                    String body = response.body().string();
-                    // Changed new Gson() to injected gson instance
-                    CalendarResponse calResponse = gson.fromJson(body, CalendarResponse.class);
-                    callback.onSuccess(calResponse);
+                    CalendarResponse calendarResponse = gson.fromJson(response.body().charStream(), CalendarResponse.class);
+                    callback.onSuccess(calendarResponse);
                 }
                 catch (Exception e)
                 {
-                    callback.onError("Parsing failed: " + e.getMessage());
+                    callback.onError(e.getMessage());
                 }
                 finally
                 {
@@ -106,10 +77,10 @@ public class RavensWatchClient
         });
     }
 
-    public void fetchMotm(String apiUrl, MotmCallback callback)
+    public void fetchMotm(String motmApiUrl, MotmCallback callback)
     {
         Request request = new Request.Builder()
-                .url(apiUrl)
+                .url(motmApiUrl)
                 .header("Cache-Control", "no-cache")
                 .header("User-Agent", "RavensWatch-RuneLite-Plugin")
                 .build();
@@ -141,7 +112,6 @@ public class RavensWatchClient
                     JsonObject fileData = filesObject.get("ravenswatch-motm.json").getAsJsonObject();
                     String rawJsonContent = fileData.get("content").getAsString();
 
-                    // Changed new Gson() to injected gson instance
                     MotmResponse motm = gson.fromJson(rawJsonContent, MotmResponse.class);
                     callback.onSuccess(motm);
                 }
@@ -155,5 +125,49 @@ public class RavensWatchClient
                 }
             }
         });
+    }
+
+    public interface CalendarCallback
+    {
+        void onSuccess(CalendarResponse response);
+        void onError(String error);
+    }
+
+    public interface MotmCallback
+    {
+        void onSuccess(MotmResponse response);
+        void onError(String error);
+    }
+
+    public static class CalendarResponse
+    {
+        public List<CalendarEvent> items;
+    }
+
+    public static class CalendarEvent
+    {
+        public String summary;
+        public EventTime start;
+    }
+
+    public static class EventTime
+    {
+        public String dateTime;
+    }
+
+    public static class GithubGistResponse
+    {
+        public java.util.Map<String, GistFile> files;
+    }
+
+    public static class GistFile
+    {
+        public String content;
+    }
+
+    public static class MotmResponse
+    {
+        public String name;
+        public String reason;
     }
 }
