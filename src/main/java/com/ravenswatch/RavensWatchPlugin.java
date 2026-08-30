@@ -450,6 +450,7 @@ public class RavensWatchPlugin extends Plugin
 
         synchronized (activeEvents) {
             for (EventAlarmData event : activeEvents) {
+                // Skip if already notified
                 if (notifiedEvents.contains(event.uniqueId)) {
                     continue;
                 }
@@ -457,8 +458,14 @@ public class RavensWatchPlugin extends Plugin
                 long secondsUntil = ChronoUnit.SECONDS.between(now, event.startTime);
                 long thresholdSeconds = alertMinutes * 60L;
 
+                // Trigger if we are within the threshold window, but the event hasn't already passed
                 if (secondsUntil > 0 && secondsUntil <= thresholdSeconds) {
+                    // Add to notified events FIRST to prevent duplicate firing loops
+                    notifiedEvents.add(event.uniqueId);
                     triggerAlert(event.title, alertMinutes);
+                }
+                else if (secondsUntil <= 0) {
+                    // Automatically mark past events as notified so they clear out
                     notifiedEvents.add(event.uniqueId);
                 }
             }
