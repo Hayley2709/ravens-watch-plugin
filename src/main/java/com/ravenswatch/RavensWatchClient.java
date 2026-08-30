@@ -79,6 +79,69 @@ public class RavensWatchClient
         });
     }
 
+    public void fetchBroadcasts(BroadcastsCallback callback)
+    {
+        String apiUrl = "https://api.github.com/gists/a817e90cf303915a38b8e55229227608";
+
+        Request request = new Request.Builder()
+                .url(apiUrl)
+                .header("Cache-Control", "no-cache")
+                .header("User-Agent", "RavensWatch-RuneLite-Plugin")
+                .header("Accept", "application/vnd.github+json")
+                .build();
+
+        okHttpClient.newCall(request).enqueue(new Callback()
+        {
+            @Override
+            public void onFailure(Call call, IOException e)
+            {
+                callback.onError(e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException
+            {
+                if (!response.isSuccessful())
+                {
+                    callback.onError("HTTP Error: " + response.code());
+                    response.close();
+                    return;
+                }
+
+                try
+                {
+                    String responseBody = response.body().string();
+                    JsonObject root = new JsonParser().parse(responseBody).getAsJsonObject();
+
+                    JsonObject filesObject = root.get("files").getAsJsonObject();
+                    // Matches your exact Gist filename
+                    JsonObject fileData = filesObject.get("rw-broadcasts.json").getAsJsonObject();
+                    String rawJsonContent = fileData.get("content").getAsString();
+
+                    // Parse the inner JSON array string into a List of Strings
+                    java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<String>>(){}.getType();
+                    List<String> broadcasts = gson.fromJson(rawJsonContent, listType);
+
+                    callback.onSuccess(broadcasts);
+                }
+                catch (Exception e)
+                {
+                    callback.onError("Parsing failed: " + e.getMessage());
+                }
+                finally
+                {
+                    response.close();
+                }
+            }
+        });
+    }
+
+    public interface BroadcastsCallback
+    {
+        void onSuccess(List<String> broadcasts);
+        void onError(String error);
+    }
+
     public void fetchMotm(String motmApiUrl, MotmCallback callback)
     {
         Request request = new Request.Builder()

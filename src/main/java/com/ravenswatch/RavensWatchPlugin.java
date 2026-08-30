@@ -1,6 +1,5 @@
 package com.ravenswatch;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.Provides;
@@ -55,6 +54,7 @@ public class RavensWatchPlugin extends Plugin
     private List<EventAlarmData> activeEvents = new ArrayList<>();
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private static final String WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxmyI8BskO27yqq6v5tVt3pDadKBMaDpVLbJa-NU17oolzIxvDS4333nmmSTkBMI43bVg/exec";
 
     private static final String[] OSRS_SKILLS = {
             "Attack", "Strength", "Defence", "Ranged", "Prayer", "Magic", "Runecraft",
@@ -99,6 +99,7 @@ public class RavensWatchPlugin extends Plugin
 
         refreshCalendar();
         refreshMotm();
+        refreshBroadcasts();
         fetchWiseOldManMemberCount();
     }
 
@@ -115,6 +116,7 @@ public class RavensWatchPlugin extends Plugin
         {
             refreshCalendar();
             refreshMotm();
+            refreshBroadcasts();
             fetchWiseOldManMemberCount();
         }
     }
@@ -134,6 +136,23 @@ public class RavensWatchPlugin extends Plugin
             @Override
             public void onError(String error) {
                 log.error("MOTM Fetch Failed: {}", error);
+            }
+        });
+    }
+
+    private void refreshBroadcasts()
+    {
+        calendarClient.fetchBroadcasts(new RavensWatchClient.BroadcastsCallback() {
+            @Override
+            public void onSuccess(List<String> broadcasts) {
+                if (panel != null && broadcasts != null) {
+                    SwingUtilities.invokeLater(() -> panel.updateBroadcastsDisplay(broadcasts));
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                log.error("Broadcast Fetch Failed: {}", error);
             }
         });
     }
@@ -193,17 +212,44 @@ public class RavensWatchPlugin extends Plugin
         });
     }
 
+    public void postBroadcastToSheet(String broadcastText)
+    {
+        JsonObject json = new JsonObject();
+        json.addProperty("broadcast", broadcastText);
+
+        RequestBody body = RequestBody.create(JSON, json.toString());
+        Request request = new Request.Builder()
+                .url(WEB_APP_URL)
+                .post(body)
+                .build();
+
+        okHttpClient.newCall(request).enqueue(new Callback()
+        {
+            @Override
+            public void onFailure(Call call, IOException e)
+            {
+                log.error("Failed to post broadcast to sheet: {}", e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response)
+            {
+                response.close();
+            }
+        });
+    }
+
     public void simulateTestBroadcast()
     {
         String mockMessage = "TestPlayer received a drop: Twisted bow (1)";
 
-        // 1. Update the UI panel immediately
+        postBroadcastToSheet(mockMessage);
+
         if (panel != null)
         {
             panel.addRecentDrop(mockMessage);
         }
 
-        // 2. Test Discord webhook integration if configured
         if (!config.clanWebhookUrl().isEmpty())
         {
             sendDiscordEmbedWebhook(config.clanWebhookUrl(), mockMessage);
@@ -213,14 +259,13 @@ public class RavensWatchPlugin extends Plugin
     @Subscribe
     public void onChatMessage(ChatMessage event)
     {
-        // Quick test trigger command in game chat
         if (event.getType() == ChatMessageType.PUBLICCHAT && event.getMessage().equalsIgnoreCase("::testdrop"))
         {
             simulateTestBroadcast();
             return;
         }
 
-        if (!config.enableDropLogger() || config.clanWebhookUrl().isEmpty())
+        if (!config.enableDropLogger())
         {
             return;
         }
@@ -232,9 +277,18 @@ public class RavensWatchPlugin extends Plugin
                 String message = event.getMessage();
                 if (isBroadcastableMessage(message) && isLocalPlayerEvent(message))
                 {
-                    sendDiscordEmbedWebhook(config.clanWebhookUrl(), message);
-
                     String cleanMessage = message.replaceAll("<[^>]*>", "").trim();
+
+                    // Post straight to Google Sheet
+                    postBroadcastToSheet(cleanMessage);
+
+                    // Send Discord webhook if configured
+                    if (!config.clanWebhookUrl().isEmpty())
+                    {
+                        sendDiscordEmbedWebhook(config.clanWebhookUrl(), message);
+                    }
+
+                    // Update panel UI
                     if (panel != null)
                     {
                         panel.addRecentDrop(cleanMessage);
@@ -380,6 +434,7 @@ public class RavensWatchPlugin extends Plugin
     {
         refreshCalendar();
         refreshMotm();
+        refreshBroadcasts();
         fetchWiseOldManMemberCount();
     }
 

@@ -148,6 +148,16 @@ public class RavensWatchPanel extends PluginPanel {
         });
     }
 
+    public void updateBroadcastsDisplay(List<String> broadcasts) {
+        SwingUtilities.invokeLater(() -> {
+            recentDrops.clear();
+            if (broadcasts != null) {
+                recentDrops.addAll(broadcasts);
+            }
+            refreshDropsUI();
+        });
+    }
+
     private void refreshDropsUI() {
         dropsContentPanel.removeAll();
 
