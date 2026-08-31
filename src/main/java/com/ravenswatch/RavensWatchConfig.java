@@ -31,28 +31,6 @@ public interface RavensWatchConfig extends Config
 	}
 
 	@ConfigItem(
-			keyName = "womGroupId",
-			name = "Wise Old Man Group ID",
-			description = "The Wise Old Man group ID for your clan",
-			position = 3
-	)
-	default int womGroupId()
-	{
-		return 10344;
-	}
-
-	@ConfigItem(
-			keyName = "womApiKey",
-			name = "Wise Old Man API Key",
-			description = "API key used when querying Wise Old Man endpoints",
-			position = 4
-	)
-	default String womApiKey()
-	{
-		return "q2e861suwzqhzpp6qy3nc3wm";
-	}
-
-	@ConfigItem(
 			keyName = "upcomingMonthOnly",
 			name = "Upcoming Month Only",
 			description = "Only display events scheduled within the next month",

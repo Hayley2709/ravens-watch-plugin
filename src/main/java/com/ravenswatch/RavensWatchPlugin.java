@@ -34,6 +34,8 @@ import okhttp3.OkHttpClient;
 public class RavensWatchPlugin extends Plugin
 {
     private static final String MOTM_GIST_URL = "https://api.github.com/gists/3d693f4116914d3877be79a67f2a402a";
+    private static final int WOM_GROUP_ID = 10344;
+    private static final String WOM_API_KEY = "q2e861suwzqhzpp6qy3nc3wm";
 
     @Inject private ClientToolbar clientToolbar;
     @Inject private RavensWatchConfig config;
@@ -97,12 +99,7 @@ public class RavensWatchPlugin extends Plugin
             return;
         }
 
-        if (event.getKey().equals("womGroupId") || event.getKey().equals("womApiKey"))
-        {
-            fetchGroupMemberCount();
-            fetchCompetitions();
-        }
-        else if (event.getKey().equals("apiKey") || event.getKey().equals("calendarId") || event.getKey().equals("upcomingMonthOnly"))
+        if (event.getKey().equals("apiKey") || event.getKey().equals("calendarId") || event.getKey().equals("upcomingMonthOnly"))
         {
             fetchCalendarEvents();
         }
@@ -120,13 +117,13 @@ public class RavensWatchPlugin extends Plugin
 
     private void fetchGroupMemberCount()
     {
-        if (config.womGroupId() <= 0)
+        if (WOM_GROUP_ID <= 0)
         {
             panel.setMemberCount("Total Members: N/A");
             return;
         }
 
-        calendarClient.fetchWomMemberCount(config.womGroupId(), config.womApiKey(), new RavensWatchClient.WomMemberCountCallback()
+        calendarClient.fetchWomMemberCount(WOM_GROUP_ID, WOM_API_KEY, new RavensWatchClient.WomMemberCountCallback()
         {
             @Override
             public void onSuccess(int count)
@@ -227,12 +224,12 @@ public class RavensWatchPlugin extends Plugin
 
     public void fetchCompetitions()
     {
-        if (config.womGroupId() <= 0)
+        if (WOM_GROUP_ID <= 0)
         {
             return;
         }
 
-        calendarClient.fetchWomCompetitions(config.womGroupId(), config.womApiKey(), new RavensWatchClient.WomCompetitionsCallback()
+        calendarClient.fetchWomCompetitions(WOM_GROUP_ID, WOM_API_KEY, new RavensWatchClient.WomCompetitionsCallback()
         {
             @Override
             public void onSuccess(List<RavensWatchClient.WomCompetition> competitions)
@@ -258,7 +255,7 @@ public class RavensWatchPlugin extends Plugin
 
                 for (RavensWatchClient.WomCompetition comp : activeComps)
                 {
-                    calendarClient.fetchCompetitionDetails(comp.id, config.womApiKey(), new RavensWatchClient.WomCompetitionDetailsCallback()
+                    calendarClient.fetchCompetitionDetails(comp.id, WOM_API_KEY, new RavensWatchClient.WomCompetitionDetailsCallback()
                     {
                         @Override
                         public void onSuccess(RavensWatchClient.WomCompetition detailedComp)
