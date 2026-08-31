@@ -10,16 +10,28 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Cursor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.util.LinkBrowser;
 
 public class RavensWatchPanel extends PluginPanel {
 
     private final JButton calendarHeaderBtn;
     private final JPanel calendarContentPanel;
+
+    // WOM Competitions Section
+    private final JButton compsHeaderBtn;
+    private final JPanel compsContentPanel;
 
     // Recent Drops components
     private final JButton dropsHeaderBtn;
@@ -89,6 +101,31 @@ public class RavensWatchPanel extends PluginPanel {
             repaint();
         });
 
+        // --- Competitions Section ---
+        compsHeaderBtn = new JButton("<html><body style='width: 155px;'>▼ Clan Competitions</body></html>");
+        compsHeaderBtn.setFont(FontManager.getRunescapeBoldFont());
+        compsHeaderBtn.setForeground(Color.WHITE);
+        compsHeaderBtn.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        compsHeaderBtn.setFocusPainted(false);
+        compsHeaderBtn.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        compsHeaderBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+
+        compsContentPanel = new JPanel();
+        compsContentPanel.setLayout(new BoxLayout(compsContentPanel, BoxLayout.Y_AXIS));
+        compsContentPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
+        compsContentPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+        compsContentPanel.setVisible(true);
+
+        compsHeaderBtn.addActionListener(e -> {
+            boolean isVisible = compsContentPanel.isVisible();
+            compsContentPanel.setVisible(!isVisible);
+            compsHeaderBtn.setText(isVisible ?
+                    "<html><body style='width: 155px;'>▶ Clan Competitions</body></html>" :
+                    "<html><body style='width: 155px;'>▼ Clan Competitions</body></html>");
+            revalidate();
+            repaint();
+        });
+
         // --- Recent Drops Section ---
         dropsHeaderBtn = new JButton("<html><body style='width: 155px;'>▼ Recent Clan Broadcasts</body></html>");
         dropsHeaderBtn.setFont(FontManager.getRunescapeBoldFont());
@@ -126,6 +163,9 @@ public class RavensWatchPanel extends PluginPanel {
         this.add(calendarHeaderBtn);
         this.add(calendarContentPanel);
         this.add(Box.createRigidArea(new Dimension(0, 10)));
+        this.add(compsHeaderBtn);
+        this.add(compsContentPanel);
+        this.add(Box.createRigidArea(new Dimension(0, 10)));
         this.add(dropsHeaderBtn);
         this.add(dropsContentPanel);
     }
@@ -133,6 +173,107 @@ public class RavensWatchPanel extends PluginPanel {
     public void setMemberCount(String text) {
         SwingUtilities.invokeLater(() -> {
             memberCountLabel.setText(text);
+            revalidate();
+            repaint();
+        });
+    }
+
+    public void updateCompetitionsList(List<RavensWatchClient.WomCompetition> competitions) {
+        SwingUtilities.invokeLater(() -> {
+            compsContentPanel.removeAll();
+
+            if (competitions == null || competitions.isEmpty()) {
+                JLabel noCompsLabel = new JLabel("No competitions found.");
+                noCompsLabel.setForeground(Color.GRAY);
+                noCompsLabel.setFont(FontManager.getRunescapeFont());
+                noCompsLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+                compsContentPanel.add(noCompsLabel);
+            } else {
+                // Filter to active competitions only (endsAt is in the future)
+                List<RavensWatchClient.WomCompetition> activeCompetitions = competitions.stream()
+                        .filter(RavensWatchClient.WomCompetition::isActive)
+                        .collect(Collectors.toList());
+
+                if (activeCompetitions.isEmpty()) {
+                    JLabel noActiveCompsLabel = new JLabel("No active competitions found.");
+                    noActiveCompsLabel.setForeground(Color.GRAY);
+                    noActiveCompsLabel.setFont(FontManager.getRunescapeFont());
+                    noActiveCompsLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+                    compsContentPanel.add(noActiveCompsLabel);
+                } else {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
+                    ZoneId localZone = ZoneId.systemDefault();
+
+                    for (int i = 0; i < activeCompetitions.size(); i++) {
+                        RavensWatchClient.WomCompetition comp = activeCompetitions.get(i);
+
+                        JPanel compCard = new JPanel();
+                        compCard.setLayout(new BoxLayout(compCard, BoxLayout.Y_AXIS));
+                        compCard.setBorder(new EmptyBorder(6, 8, 6, 8));
+                        compCard.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                        compCard.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+                        compCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+                        compCard.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+                        compCard.addMouseListener(new MouseAdapter() {
+                            @Override
+                            public void mouseClicked(MouseEvent e) {
+                                LinkBrowser.browse("https://wiseoldman.net/competitions/" + comp.id);
+                            }
+                        });
+
+                        JLabel titleLabel = new JLabel("<html><body style='width: 170px; word-wrap: break-word;'>🏆 " + comp.title + "</body></html>");
+                        titleLabel.setForeground(Color.WHITE);
+                        titleLabel.setFont(FontManager.getRunescapeBoldFont());
+                        titleLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+
+                        String dateText = "Dates TBD";
+                        if (comp.startsAt != null && comp.endsAt != null) {
+                            ZonedDateTime start = ZonedDateTime.parse(comp.startsAt).withZoneSameInstant(localZone);
+                            ZonedDateTime end = ZonedDateTime.parse(comp.endsAt).withZoneSameInstant(localZone);
+                            dateText = start.format(formatter) + " - " + end.format(formatter);
+                        }
+
+                        JLabel dateLabel = new JLabel("<html><body style='width: 170px;'><font color='gray'>" + dateText + "</font></body></html>");
+                        dateLabel.setFont(FontManager.getRunescapeFont());
+                        dateLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+
+                        compCard.add(titleLabel);
+                        compCard.add(dateLabel);
+
+                        // Top 3 Leaderboard Display
+                        List<RavensWatchClient.WomParticipation> participations = comp.participations;
+                        if (participations != null && !participations.isEmpty()) {
+                            compCard.add(Box.createRigidArea(new Dimension(0, 4)));
+
+                            List<RavensWatchClient.WomParticipation> top3 = participations.stream()
+                                    .limit(3)
+                                    .collect(Collectors.toList());
+
+                            for (int rank = 0; rank < top3.size(); rank++) {
+                                RavensWatchClient.WomParticipation p = top3.get(rank);
+                                String medal = (rank == 0) ? "🥇 " : (rank == 1) ? "🥈 " : "🥉 ";
+                                String username = p.player != null ? p.player.username : "Unknown";
+                                int gained = p.progress != null ? (int) p.progress.gained : 0;
+
+                                JLabel rankLabel = new JLabel("<html><body style='width: 170px;'><font color='#D3D3D3'>" + medal + username + " (+" + String.format("%,d", gained) + ")</font></body></html>");
+                                rankLabel.setFont(FontManager.getRunescapeFont());
+                                rankLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+                                compCard.add(rankLabel);
+                            }
+                        }
+
+                        compsContentPanel.add(compCard);
+
+                        if (i < activeCompetitions.size() - 1) {
+                            compsContentPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+                        }
+                    }
+                }
+            }
+
+            compsContentPanel.revalidate();
+            compsContentPanel.repaint();
             revalidate();
             repaint();
         });

@@ -31,10 +31,32 @@ public interface RavensWatchConfig extends Config
 	}
 
 	@ConfigItem(
+			keyName = "womGroupId",
+			name = "Wise Old Man Group ID",
+			description = "The Wise Old Man group ID for your clan",
+			position = 3
+	)
+	default int womGroupId()
+	{
+		return 10344;
+	}
+
+	@ConfigItem(
+			keyName = "womApiKey",
+			name = "Wise Old Man API Key",
+			description = "API key used when querying Wise Old Man endpoints",
+			position = 4
+	)
+	default String womApiKey()
+	{
+		return "q2e861suwzqhzpp6qy3nc3wm";
+	}
+
+	@ConfigItem(
 			keyName = "upcomingMonthOnly",
 			name = "Upcoming Month Only",
 			description = "Only display events scheduled within the next month",
-			position = 3
+			position = 5
 	)
 	default boolean upcomingMonthOnly()
 	{
@@ -45,7 +67,7 @@ public interface RavensWatchConfig extends Config
 			keyName = "enableNotifications",
 			name = "Enable Event Notifications",
 			description = "Receive desktop and chat reminders before clan events start",
-			position = 4
+			position = 6
 	)
 	default boolean enableNotifications()
 	{
@@ -57,7 +79,7 @@ public interface RavensWatchConfig extends Config
 			keyName = "notificationMinutes",
 			name = "Notification Minutes",
 			description = "How many minutes before an event to trigger a reminder",
-			position = 5
+			position = 7
 	)
 	default int notificationMinutes()
 	{
@@ -68,7 +90,7 @@ public interface RavensWatchConfig extends Config
 			keyName = "enableDropLogger",
 			name = "Enable Clan Drop Logger",
 			description = "Log valuable clan drops and milestones to Discord",
-			position = 6
+			position = 8
 	)
 	default boolean enableDropLogger()
 	{
@@ -79,7 +101,7 @@ public interface RavensWatchConfig extends Config
 			keyName = "clanWebhookUrl",
 			name = "Discord Webhook URL",
 			description = "The Discord webhook URL where clan drop embeds will be posted",
-			position = 7
+			position = 9
 	)
 	default String clanWebhookUrl()
 	{
