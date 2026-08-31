@@ -222,7 +222,7 @@ public class RavensWatchPanel extends PluginPanel {
                             }
                         });
 
-                        JLabel titleLabel = new JLabel("<html><body style='width: 170px; word-wrap: break-word;'>🏆 " + comp.title + "</body></html>");
+                        JLabel titleLabel = new JLabel("<html><body style='width: 155px;'>🏆 " + comp.title + "</body></html>");
                         titleLabel.setForeground(Color.WHITE);
                         titleLabel.setFont(FontManager.getRunescapeBoldFont());
                         titleLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
