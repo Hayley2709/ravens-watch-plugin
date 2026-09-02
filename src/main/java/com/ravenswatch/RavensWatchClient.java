@@ -29,8 +29,6 @@ public class RavensWatchClient {
         this.gson = gson;
     }
 
-    // --- Inner Models ---
-
     public static class CalendarResponse {
         public List<CalendarEvent> items;
     }
@@ -78,45 +76,35 @@ public class RavensWatchClient {
         public double gained;
     }
 
-    // --- Callback Interfaces ---
-
     public interface WomMemberCountCallback {
         void onSuccess(int count);
-
         void onError(String error);
     }
 
     public interface BroadcastsCallback {
         void onSuccess(List<String> broadcasts);
-
         void onError(String error);
     }
 
     public interface WomCompetitionsCallback {
         void onSuccess(List<WomCompetition> competitions);
-
         void onError(String error);
     }
 
     public interface WomCompetitionDetailsCallback {
         void onSuccess(WomCompetition competition);
-
         void onError(String error);
     }
 
     public interface CalendarCallback {
         void onSuccess(CalendarResponse response);
-
         void onError(String error);
     }
 
     public interface MotmCallback {
         void onSuccess(List<String> ravensList);
-
         void onError(String error);
     }
-
-    // --- API Requests ---
 
     public void fetchWomMemberCount(int groupId, String apiKey, WomMemberCountCallback callback) {
         HttpUrl url = HttpUrl.parse("https://api.wiseoldman.net/v2/groups/" + groupId);
@@ -227,8 +215,7 @@ public class RavensWatchClient {
                     JsonObject fileData = filesObject.get("rw-broadcasts.json").getAsJsonObject();
                     String rawJsonContent = fileData.get("content").getAsString();
 
-                    Type listType = new TypeToken<List<String>>() {
-                    }.getType();
+                    Type listType = new TypeToken<List<String>>() {}.getType();
                     List<String> broadcasts = gson.fromJson(rawJsonContent, listType);
 
                     callback.onSuccess(broadcasts);
@@ -266,8 +253,7 @@ public class RavensWatchClient {
                 }
 
                 try {
-                    Type listType = new TypeToken<List<WomCompetition>>() {
-                    }.getType();
+                    Type listType = new TypeToken<List<WomCompetition>>() {}.getType();
                     List<WomCompetition> competitions = gson.fromJson(response.body().charStream(), listType);
                     callback.onSuccess(competitions);
                 } catch (Exception e) {
@@ -344,8 +330,7 @@ public class RavensWatchClient {
                     JsonObject fileData = filesObject.get("ravenswatch-motm.json").getAsJsonObject();
                     String rawJsonContent = fileData.get("content").getAsString();
 
-                    Type listType = new TypeToken<List<String>>() {
-                    }.getType();
+                    Type listType = new TypeToken<List<String>>() {}.getType();
                     List<String> ravensList = gson.fromJson(rawJsonContent, listType);
                     callback.onSuccess(ravensList);
                 } catch (Exception e) {
