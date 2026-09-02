@@ -43,7 +43,7 @@ public class RavensWatchPlugin extends Plugin
     private static final String MOTM_GIST_URL = "https://api.github.com/gists/3d693f4116914d3877be79a67f2a402a";
     private static final int WOM_GROUP_ID = 10344;
     private static final String WOM_API_KEY = "q2e861suwzqhzpp6qy3nc3wm";
-    private static final String REQUIRED_KEY = "YourSecretClanPasswordHere";
+    private static final String REQUIRED_KEY = "RWPluginAccess27";
 
     private static final String WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxmyI8BskO27yqq6v5tVt3pDadKBMaDpVLbJa-NU17oolzIxvDS4333nmmSTkBMI43bVg/exec";
 
