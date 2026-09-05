@@ -11,6 +11,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Cursor;
+import java.awt.GridLayout;
+import java.awt.CardLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.ZonedDateTime;
@@ -28,19 +30,25 @@ public class RavensWatchPanel extends PluginPanel {
 
     private final JButton calendarHeaderBtn;
     private final JPanel calendarContentPanel;
+    private final CardLayout calendarCardLayout = new CardLayout();
+    private final JPanel calendarCardContainer = new JPanel(calendarCardLayout);
 
-    // WOM Competitions Section
     private final JButton compsHeaderBtn;
     private final JPanel compsContentPanel;
+    private final CardLayout compsCardLayout = new CardLayout();
+    private final JPanel compsCardContainer = new JPanel(compsCardLayout);
 
-    // Recent Drops components
     private final JButton dropsHeaderBtn;
     private final JPanel dropsContentPanel;
-    private final List<String> recentDrops = new ArrayList<>();
+    private final CardLayout dropsCardLayout = new CardLayout();
+    private final JPanel dropsCardContainer = new JPanel(dropsCardLayout);
 
+    private final List<String> recentDrops = new ArrayList<>();
     private final JPanel motmContainer;
     private final JLabel memberCountLabel;
-    private List<String[]> currentEvents;
+
+    private static final String UNLOCKED_CARD = "UNLOCKED";
+    private static final String LOCKED_CARD = "LOCKED";
 
     private RavensWatchPlugin plugin;
 
@@ -59,8 +67,8 @@ public class RavensWatchPanel extends PluginPanel {
         mainTitle.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
         mainTitle.setBorder(new EmptyBorder(5, 0, 5, 0));
 
-        // --- Member Count (Wise Old Man) ---
-        memberCountLabel = new JLabel("Total Members: Loading...", SwingConstants.CENTER);
+        // --- Member Count ---
+        memberCountLabel = new JLabel("Total Members: Protected", SwingConstants.CENTER);
         memberCountLabel.setFont(FontManager.getRunescapeFont());
         memberCountLabel.setForeground(ColorScheme.GRAND_EXCHANGE_PRICE);
         memberCountLabel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
@@ -89,11 +97,16 @@ public class RavensWatchPanel extends PluginPanel {
         calendarContentPanel.setLayout(new BoxLayout(calendarContentPanel, BoxLayout.Y_AXIS));
         calendarContentPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
         calendarContentPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        calendarContentPanel.setVisible(true);
+
+        JPanel calendarLocked = createLockedPlaceholder("Enter clan access key in plugin settings to view events.");
+        calendarCardContainer.setLayout(calendarCardLayout);
+        calendarCardContainer.add(calendarContentPanel, UNLOCKED_CARD);
+        calendarCardContainer.add(calendarLocked, LOCKED_CARD);
+        calendarCardContainer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
         calendarHeaderBtn.addActionListener(e -> {
-            boolean isVisible = calendarContentPanel.isVisible();
-            calendarContentPanel.setVisible(!isVisible);
+            boolean isVisible = calendarCardContainer.isVisible();
+            calendarCardContainer.setVisible(!isVisible);
             calendarHeaderBtn.setText(isVisible ?
                     "<html><body style='width: 155px;'>▶ Raven's Watch Event Calendar</body></html>" :
                     "<html><body style='width: 155px;'>▼ Raven's Watch Event Calendar</body></html>");
@@ -114,11 +127,16 @@ public class RavensWatchPanel extends PluginPanel {
         compsContentPanel.setLayout(new BoxLayout(compsContentPanel, BoxLayout.Y_AXIS));
         compsContentPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
         compsContentPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        compsContentPanel.setVisible(true);
+
+        JPanel compsLocked = createLockedPlaceholder("Enter clan access key in plugin settings to view competitions.");
+        compsCardContainer.setLayout(compsCardLayout);
+        compsCardContainer.add(compsContentPanel, UNLOCKED_CARD);
+        compsCardContainer.add(compsLocked, LOCKED_CARD);
+        compsCardContainer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
         compsHeaderBtn.addActionListener(e -> {
-            boolean isVisible = compsContentPanel.isVisible();
-            compsContentPanel.setVisible(!isVisible);
+            boolean isVisible = compsCardContainer.isVisible();
+            compsCardContainer.setVisible(!isVisible);
             compsHeaderBtn.setText(isVisible ?
                     "<html><body style='width: 155px;'>▶ Clan Competitions</body></html>" :
                     "<html><body style='width: 155px;'>▼ Clan Competitions</body></html>");
@@ -139,11 +157,16 @@ public class RavensWatchPanel extends PluginPanel {
         dropsContentPanel.setLayout(new BoxLayout(dropsContentPanel, BoxLayout.Y_AXIS));
         dropsContentPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
         dropsContentPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        dropsContentPanel.setVisible(true);
+
+        JPanel dropsLocked = createLockedPlaceholder("Enter clan access key in plugin settings to view broadcasts.");
+        dropsCardContainer.setLayout(dropsCardLayout);
+        dropsCardContainer.add(dropsContentPanel, UNLOCKED_CARD);
+        dropsCardContainer.add(dropsLocked, LOCKED_CARD);
+        dropsCardContainer.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
         dropsHeaderBtn.addActionListener(e -> {
-            boolean isVisible = dropsContentPanel.isVisible();
-            dropsContentPanel.setVisible(!isVisible);
+            boolean isVisible = dropsCardContainer.isVisible();
+            dropsCardContainer.setVisible(!isVisible);
             dropsHeaderBtn.setText(isVisible ?
                     "<html><body style='width: 155px;'>▶ Recent Clan Broadcasts</body></html>" :
                     "<html><body style='width: 155px;'>▼ Recent Clan Broadcasts</body></html>");
@@ -161,13 +184,43 @@ public class RavensWatchPanel extends PluginPanel {
         this.add(motmContainer);
         this.add(Box.createRigidArea(new Dimension(0, 10)));
         this.add(calendarHeaderBtn);
-        this.add(calendarContentPanel);
+        this.add(calendarCardContainer);
         this.add(Box.createRigidArea(new Dimension(0, 10)));
         this.add(compsHeaderBtn);
-        this.add(compsContentPanel);
+        this.add(compsCardContainer);
         this.add(Box.createRigidArea(new Dimension(0, 10)));
         this.add(dropsHeaderBtn);
-        this.add(dropsContentPanel);
+        this.add(dropsCardContainer);
+    }
+
+    public void setPanelUnlocked(boolean unlocked) {
+        SwingUtilities.invokeLater(() -> {
+            String card = unlocked ? UNLOCKED_CARD : LOCKED_CARD;
+            calendarCardLayout.show(calendarCardContainer, card);
+            compsCardLayout.show(compsCardContainer, card);
+            dropsCardLayout.show(dropsCardContainer, card);
+
+            if (!unlocked) {
+                motmContainer.setVisible(false);
+                memberCountLabel.setText("Total Members: Protected");
+            }
+            revalidate();
+            repaint();
+        });
+    }
+
+    private JPanel createLockedPlaceholder(String text) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        panel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+
+        JLabel lockLabel = new JLabel("<html><body style='width: 155px; text-align: center;'><font color='gray'>🔒 " + text + "</font></body></html>");
+        lockLabel.setFont(FontManager.getRunescapeFont());
+        lockLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+
+        panel.add(lockLabel);
+        return panel;
     }
 
     public void setMemberCount(String text) {
@@ -189,7 +242,6 @@ public class RavensWatchPanel extends PluginPanel {
                 noCompsLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
                 compsContentPanel.add(noCompsLabel);
             } else {
-                // Filter to active competitions only (endsAt is in the future)
                 List<RavensWatchClient.WomCompetition> activeCompetitions = competitions.stream()
                         .filter(RavensWatchClient.WomCompetition::isActive)
                         .collect(Collectors.toList());
@@ -241,7 +293,6 @@ public class RavensWatchPanel extends PluginPanel {
                         compCard.add(titleLabel);
                         compCard.add(dateLabel);
 
-                        // Top 3 Leaderboard Display
                         List<RavensWatchClient.WomParticipation> participations = comp.participations;
                         if (participations != null && !participations.isEmpty()) {
                             compCard.add(Box.createRigidArea(new Dimension(0, 4)));
@@ -379,7 +430,6 @@ public class RavensWatchPanel extends PluginPanel {
 
     public void updateEventsList(List<String[]> formattedEvents) {
         SwingUtilities.invokeLater(() -> {
-            this.currentEvents = formattedEvents;
             calendarContentPanel.removeAll();
 
             JLabel tzLabel = new JLabel("<html><font color='gray'>Times adjusted for your local timezone</font></html>");
